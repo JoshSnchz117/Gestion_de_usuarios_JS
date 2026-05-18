@@ -46,6 +46,8 @@ class MainActivity : ComponentActivity() {
 
         var users by remember { mutableStateOf(dbHelper.getAllUsers()) }
 
+        var editingUserId by remember { mutableStateOf<Int?>(null) }
+
         val context = LocalContext.current
 
         Column(modifier = Modifier.padding(50.dp)) {
@@ -91,14 +93,26 @@ class MainActivity : ComponentActivity() {
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(onClick = {
-                if (dbHelper.insertUser(name, lastname, age.toIntOrNull() ?: 0, gender, phone, email)) {
-                    Toast.makeText(context, "Usuario insertado correctamente", Toast.LENGTH_LONG).show()
-                    users = dbHelper.getAllUsers()
+                if (editingUserId == null) {
+                    // Insertar usuario
+                    if (dbHelper.insertUser(name, lastname, age.toIntOrNull() ?: 0, gender, phone, email)) {
+                        Toast.makeText(context, "Usuario insertado correctamente", Toast.LENGTH_LONG).show()
+                        users = dbHelper.getAllUsers()
+                    } else {
+                        Toast.makeText(context, "Error al insertar el usuario", Toast.LENGTH_LONG).show()
+                    }
                 } else {
-                    Toast.makeText(context, "Error al insertar el usuario", Toast.LENGTH_LONG).show()
+                    // Actualizar usuario
+                    if (dbHelper.updateUser(editingUserId!!, name, lastname, age.toIntOrNull() ?: 0, gender, phone, email)) {
+                        Toast.makeText(context, "Usuario actualizado correctamente", Toast.LENGTH_LONG).show()
+                        users = dbHelper.getAllUsers()
+                        editingUserId = null
+                    } else {
+                        Toast.makeText(context, "Error al actualizar el usuario", Toast.LENGTH_LONG).show()
+                    }
                 }
             }) {
-                Text(text = "Insert User")
+                Text(text = if (editingUserId == null) "Insert User" else "Update User")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -106,14 +120,33 @@ class MainActivity : ComponentActivity() {
             // Lista de usuarios
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(users) { user ->
-                    UserRow(user)
+                    UserRow(
+                        user = user,
+                        onDelete = {
+                            if (dbHelper.deleteUser(user["id"] as Int)) {
+                                users = dbHelper.getAllUsers()
+                                Toast.makeText(context, "Usuario eliminado correctamente", Toast.LENGTH_LONG).show()
+                            } else {
+                                Toast.makeText(context, "Error al eliminar el usuario", Toast.LENGTH_LONG).show()
+                            }
+                        },
+                        onEdit = {
+                            editingUserId = user["id"] as Int
+                            name = user["name"] as String
+                            lastname = user["lastname"] as String
+                            age = (user["age"] as Int).toString()
+                            gender = user["gender"] as String
+                            phone = user["phone"] as String
+                            email = user["email"] as String
+                        }
+                    )
                 }
             }
         }
     }
 
     @Composable
-    fun UserRow(user: Map<String, Any>) {
+    fun UserRow(user: Map<String, Any>, onDelete: () -> Unit, onEdit: () -> Unit) {
         Column(modifier = Modifier.padding(8.dp).fillMaxWidth()) {
             Text(text = "Name: ${user["name"]}")
             Text(text = "Last Name: ${user["lastname"]}")
@@ -121,6 +154,15 @@ class MainActivity : ComponentActivity() {
             Text(text = "Gender: ${user["gender"]}")
             Text(text = "Phone: ${user["phone"]}")
             Text(text = "Email: ${user["email"]}")
+            Row {
+                Button(onClick = onEdit) {
+                    Text(text = "Edit")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(onClick = onDelete) {
+                    Text(text = "Delete")
+                }
+            }
             Spacer(modifier = Modifier.height(8.dp))
         }
     }
