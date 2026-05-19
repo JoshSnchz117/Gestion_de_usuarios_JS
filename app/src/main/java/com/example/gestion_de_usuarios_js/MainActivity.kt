@@ -15,6 +15,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import androidx.compose.ui.graphics.Color
 
 class MainActivity : ComponentActivity() {
 
@@ -25,7 +37,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         dbHelper = DatabasOpenHelper(this)
         setContent {
-            addUser()
+            var showSplash by remember { mutableStateOf(true) }
+
+            if (showSplash) {
+                SplashScreen {
+                    showSplash = false
+                }
+            } else {
+                addUser()
+            }
         }
     }
 
@@ -141,6 +161,32 @@ class MainActivity : ComponentActivity() {
                         }
                     )
                 }
+            }
+        }
+    }
+
+    @Composable
+    fun SplashScreen(onTimeout: () -> Unit) {
+        // Temporizador de 3 segundos
+        LaunchedEffect(Unit) {
+            delay(3000)
+            onTimeout()
+        }
+
+        // Diseño del splash
+        Surface(
+            modifier = Modifier.fillMaxSize(),
+            color = Color.White
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                    contentDescription = "Splash Logo",
+                    modifier = Modifier.size(150.dp)
+                )
             }
         }
     }
