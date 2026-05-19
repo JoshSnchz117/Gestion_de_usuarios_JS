@@ -167,7 +167,6 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun SplashScreen(onTimeout: () -> Unit) {
-        // Temporizador de 3 segundos
         LaunchedEffect(Unit) {
             delay(3000)
             onTimeout()
